@@ -31,7 +31,7 @@ if st.button("Evaluate"):
 #             response = llm.invoke(prompt)
 #             st.write("### Assessment Report")
 #             st.write(response.content)
-        except Exception as e:
-            st.error(f"Error during evaluation: {e}")
+        # except Exception as e:
+        #     st.error(f"Error during evaluation: {e}")
     else:
         st.warning("Please enter a paragraph to evaluate.")
