@@ -1,0 +1,1 @@
+## Creating an RAG application using Lama3 and langchain frame work.
