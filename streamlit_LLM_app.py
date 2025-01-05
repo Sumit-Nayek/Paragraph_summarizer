@@ -16,10 +16,10 @@ st.write("Enter your paragraph below and press **Evaluate** to get writing quali
 # Input Text Box
 user_input = st.text_area("Enter your paragraph here:", height=200)
 
-# # Button to evaluate
-# if st.button("Evaluate"):
-#     if user_input.strip():
-#         st.write("**Evaluating... Please wait.**")
+# Button to evaluate
+if st.button("Evaluate"):
+    if user_input.strip():
+        st.write("**Evaluating... Please wait.**")
 #         try:
 #             # Query the LLM
 #             prompt = (
@@ -31,7 +31,7 @@ user_input = st.text_area("Enter your paragraph here:", height=200)
 #             response = llm.invoke(prompt)
 #             st.write("### Assessment Report")
 #             st.write(response.content)
-#         except Exception as e:
-#             st.error(f"Error during evaluation: {e}")
-#     else:
-#         st.warning("Please enter a paragraph to evaluate.")
+        except Exception as e:
+            st.error(f"Error during evaluation: {e}")
+    else:
+        st.warning("Please enter a paragraph to evaluate.")
