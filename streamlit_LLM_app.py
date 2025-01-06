@@ -3,7 +3,7 @@ import streamlit as st
 
 # Initialize the ChatGroq LLM
 # llm = ChatGroq(
-#     groq_api_key="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",
+#     groq_api_key="",
 #     model_name="llama3-8b-8192",
 #     temperature=0,
 # )
