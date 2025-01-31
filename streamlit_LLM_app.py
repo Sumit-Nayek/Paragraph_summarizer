@@ -12,7 +12,7 @@ from openai import OpenAI
 #     "authorization": st.secrets["API_key"],
 #     "Content-type": "application/json"
 # }
-Api_key = st.secrets['api_key']
+Api_key= st.secrets['api_key']
 id=st.secrets['link']
 client = OpenAI(
     base_url=id,
