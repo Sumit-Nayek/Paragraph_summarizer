@@ -1,3 +1,4 @@
 streamlit 
 langchain-groq
 pyhton==3.10.12
+OpenAI
