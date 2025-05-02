@@ -19,21 +19,21 @@ client = OpenAI(
     api_key=Api_key,
 )
 # Streamlit App
-st.title("Paragraph Writing Assessment")
+st.title("Scientific paper summarizer")
 
-st.write("Enter your paragraph below and press **Evaluate** to get writing quality scores!")
+st.write("Enter your paragraph below or Upload your scientific paper")
 
 # Input Text Box
 user_input = st.text_area("Enter your paragraph here:", height=200)
 
 # Button to evaluate
-if st.button("Evaluate"):
+if st.button("Summarize"):
     if user_input.strip():
-        st.write("**Evaluating... Please wait.**")
+        st.write("**Processing... Please wait.**")
         try:
             # Query the LLM
             prompt = (
-                f"Evaluate the following paragraph for writing quality across various parameters "
+                f"Sumarise the uploaded documents with refference"
                 f"such as Clarity, Grammar, Engagement, Vocabulary, Organization, Tone, Contextuality, "
                 f"Sentence Structure, Creativity, and Word Count. Provide scores out of 5 in a nice presentable table format.\n\n"
                 f"Paragraph:\n{user_input}"
