@@ -35,7 +35,7 @@ if st.button("Summarize"):
             prompt = (
                 f"Sumarise the uploaded documents with refference"
                 f"such as Clarity, Grammar, Engagement, Vocabulary, Organization, Tone, Contextuality, "
-                f"Sentence Structure, Creativity, and Word Count. Provide scores out of 5 in a nice presentable table format.\n\n"
+                f"Sentence Structure, Research domain, type of model used ,Creativity, and Scientific contribution. Provide scores out of 5 in a nice presentable table format.\n\n"
                 f"Paragraph:\n{user_input}"
             )
             completion = client.chat.completions.create(
