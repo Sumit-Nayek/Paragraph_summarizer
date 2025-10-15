@@ -36,18 +36,5 @@ The objective is to help users:
 * Students or researchers summarizing long academic texts.
 * Readers wanting to grasp essence of articles more quickly.
 
----
-
-## 📜 License
-
-This project is licensed under the **MIT License** – see `LICENSE` for details.
-
----
-
-## 📬 Contact
-
-**Author:** Sumit Nayek
-🔗 GitHub: [Sumit-Nayek](https://github.com/Sumit-Nayek)
-Feel free to open issues, submit enhancements, or suggest new summarization models/frameworks.
 
 
