@@ -1,13 +1,13 @@
 # 📄 Paragraph Summarizer
 
 ## Project Overview
-**Paragraph Summarizer** is a simple AI-powered tool for summarizing paragraphs or longer texts into concise, coherent summaries. The app uses natural language processing (NLP) and transformer models to identify salient points and generate readable summaries.
+This is a simple AI-powered tool for summarizing paragraphs or longer texts into concise, coherent summaries. The app uses natural language processing (NLP) and transformer models to identify salient points and generate readable summaries.
 
 ---
 
 ## Objective  
 The objective is to help users:
-- **Quickly compress** long paragraphs or articles into short summaries.  
+- Quickly compress long paragraphs or articles into short summaries.  
 - Improve reading efficiency by extracting key ideas.  
 - Use AI summarization in writing, research, content creation, or learning tasks.
 
