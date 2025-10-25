@@ -22,7 +22,7 @@ The objective is to help users:
 
 ---
 
-## ⚙️ Features
+## Features
 - Input free-form paragraphs or pasted text.  
 - Generate concise summaries with adjustable length (short / medium / long).  
 - Interactive web interface.  
@@ -30,7 +30,7 @@ The objective is to help users:
 
 ---
 
-## 🔍 Use Cases
+## Use Cases
 
 * Content creators who need to summarize drafts or articles.
 * Students or researchers summarizing long academic texts.
