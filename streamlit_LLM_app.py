@@ -1,17 +1,7 @@
 import streamlit as st
 #from langchain_groq import ChatGroq
 
-# Initialize the ChatGroq LLM
-# llm = ChatGroq(
-#     groq_api_key="",
-#     model_name="llama3-8b-8192",
-#     temperature=0,
-# )
 from openai import OpenAI
-# headers={
-#     "authorization": st.secrets["API_key"],
-#     "Content-type": "application/json"
-# }
 Api_key= st.secrets['api_key']
 id=st.secrets['link']
 client = OpenAI(
