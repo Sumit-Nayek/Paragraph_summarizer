@@ -1,3 +1,4 @@
+## The solo problem f this reposiratory is that it need groq API key run
 import streamlit as st
 #from langchain_groq import ChatGroq
 
