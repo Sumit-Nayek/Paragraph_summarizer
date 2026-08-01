@@ -1,44 +1,78 @@
-## The solo problem f this reposiratory is that it need groq API key run
+import os
 import streamlit as st
-#from langchain_groq import ChatGroq
-
+from dotenv import load_dotenv
 from openai import OpenAI
-Api_key= st.secrets['api_key']
-id=st.secrets['link']
-client = OpenAI(
-    base_url=id,
-    api_key=Api_key,
+
+# Load environment variables from .env if running locally
+load_dotenv()
+
+# --- 1. API KEY RESOLUTION ---
+# Checks Streamlit Secrets first (for Cloud), then environment variables (for Local)
+nvidia_api_key = st.secrets.get("NVIDIA_API_KEY") or os.getenv("NVIDIA_API_KEY")
+
+# --- 2. STREAMLIT UI SETUP ---
+st.set_page_config(
+    page_title="AI Paragraph Summarizer (NVIDIA NIM)",
+    page_icon="📝",
+    layout="centered"
 )
-# Streamlit App
-st.title("Scientific paper summarizer")
 
-st.write("Enter your paragraph below or Upload your scientific paper")
+st.title("📝 AI Paragraph Summarizer")
+st.caption("Powered by NVIDIA NIM API & Llama-3.3-70B-Instruct")
 
-# Input Text Box
-user_input = st.text_area("Enter your paragraph here:", height=200)
+# Sidebar for controls
+st.sidebar.header("Summarizer Settings")
+temperature = st.sidebar.slider("Creativity (Temperature)", 0.0, 1.0, 0.2, 0.1)
+max_tokens = st.sidebar.slider("Max Summary Tokens", 50, 1000, 250, 50)
 
-# Button to evaluate
-if st.button("Summarize"):
-    if user_input.strip():
-        st.write("**Processing... Please wait.**")
-        try:
-            # Query the LLM
-            prompt = (
-                f"Sumarise the uploaded documents with refference"
-                f"such as Clarity, Grammar, Engagement, Vocabulary, Organization, Tone, Contextuality, "
-                f"Sentence Structure, Research domain, type of model used ,Creativity, and Scientific contribution. Provide scores out of 5 in a nice presentable table format.\n\n"
-                f"Paragraph:\n{user_input}"
-            )
-            completion = client.chat.completions.create(
-            model="meta-llama/llama-3.2-11b-vision-instruct:free",
-            messages=[
-                        {"role": "system", "content": "You are a helpful assistant for evaluting the user paragraph."},
-                        {"role": "user", "content": prompt},
-                    ]
-                )
-            st.write("### Assessment Report")
-            st.write(completion.choices[0].message.content)
-        except Exception as e:
-            st.error(f"Error during evaluation: {e}")
+# Check for API Key
+if not nvidia_api_key:
+    st.error("⚠️ NVIDIA API Key not found. Please set `NVIDIA_API_KEY` in Streamlit Secrets or your `.env` file.")
+    st.stop()
+
+# --- 3. INITIALIZE OPENAI CLIENT POINTING TO NVIDIA NIM ---
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=nvidia_api_key
+)
+
+# --- 4. MAIN INPUT & SUMMARIZATION LOGIC ---
+input_text = st.text_area(
+    "Paste your paragraph or text here:",
+    height=250,
+    placeholder="Enter long text or paragraphs you want to summarize..."
+)
+
+if st.button("Summarize Paragraph", type="primary"):
+    if not input_text.strip():
+        st.warning("Please enter some text before generating a summary.")
     else:
-        st.warning("Please enter a paragraph to evaluate.")
+        with st.spinner("Generating summary using NVIDIA NIM..."):
+            try:
+                response = client.chat.completions.create(
+                    model="meta/llama-3.3-70b-instruct",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a professional text summarizer. "
+                                "Summarize the provided text into a concise, well-structured "
+                                "paragraph capturing all key points."
+                            )
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Please summarize the following text:\n\n{input_text}"
+                        }
+                    ],
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                
+                summary = response.choices[0].message.content
+                
+                st.subheader("Summary Result:")
+                st.success(summary)
+                
+            except Exception as e:
+                st.error(f"An error occurred while calling NVIDIA NIM API: {e}")
