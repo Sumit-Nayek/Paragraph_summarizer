@@ -26,7 +26,7 @@ The objective is to help users:
 - Generate concise summaries with adjustable length (short / medium / long).  
 - Interactive web interface.  
 - Ability to tweak summarization parameters if desired.
-
+![alt text](image-1.png)
 ---
 
 ## Use Cases
