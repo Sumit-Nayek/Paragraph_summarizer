@@ -58,11 +58,30 @@ if "Fast Mode" in model_mode:
 else:
     selected_model = "meta/llama-3.3-70b-instruct"
 
+# Customization Settings
+st.sidebar.markdown("---")
+st.sidebar.header("🎯 Summary Style & Language")
+
+summary_style = st.sidebar.selectbox(
+    "Summary Format / Style:",
+    [
+        "Executive Bullet Points",
+        "TL;DR One-Liner",
+        "ELI5 (Explain Like I'm 5)",
+        "Structured Key Takeaways"
+    ]
+)
+
+target_language = st.sidebar.selectbox(
+    "Target Language:",
+    ["English", "Spanish", "French", "German", "Hindi", "Mandarin Chinese"]
+)
+
 # Generation Hyperparameters
 st.sidebar.markdown("---")
 st.sidebar.header("🎛️ Hyperparameters")
 temperature = st.sidebar.slider("Creativity (Temperature)", 0.0, 1.0, 0.2, 0.1)
-max_tokens = st.sidebar.slider("Max Summary Tokens", 50, 1000, 250, 50)
+max_tokens = st.sidebar.slider("Max Summary Tokens", 50, 1000, 300, 50)
 
 # Check for API Key presence
 if not nvidia_api_key:
@@ -75,24 +94,28 @@ client = OpenAI(
     api_key=nvidia_api_key
 )
 
-# --- 6. STREAMING GENERATOR FUNCTION ---
-def generate_summary_stream(text: str, model: str, temp: float, tokens: int):
-    """Generator function that streams tokens from NVIDIA NIM API in real time."""
+# --- 6. DYNAMIC STREAMING GENERATOR FUNCTION ---
+def generate_summary_stream(text: str, model: str, temp: float, tokens: int, style: str, language: str):
+    """Generator function that builds dynamic system prompts and streams tokens from NVIDIA NIM."""
+    
+    style_prompts = {
+        "Executive Bullet Points": "Summarize the text using clear, professional executive bullet points.",
+        "TL;DR One-Liner": "Provide a single, impactful one-sentence summary (TL;DR).",
+        "ELI5 (Explain Like I'm 5)": "Explain and summarize the main concepts in very simple terms as if explaining to a 5-year-old.",
+        "Structured Key Takeaways": "Provide a brief 2-sentence overview followed by a section of key takeaways."
+    }
+
+    system_instruction = (
+        f"You are an expert multilingual summarizer. "
+        f"{style_prompts.get(style, '')} "
+        f"IMPORTANT: The final summary MUST be written in {language}."
+    )
+
     response_stream = client.chat.completions.create(
         model=model,
         messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are an expert paragraph summarizer. "
-                    "Summarize the provided text into a concise, well-structured "
-                    "paragraph capturing all key points."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Please summarize the following text:\n\n{text}"
-            }
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": f"Please summarize the following text:\n\n{text}"}
         ],
         temperature=temp,
         max_tokens=tokens,
@@ -107,7 +130,6 @@ def generate_summary_stream(text: str, model: str, temp: float, tokens: int):
 # --- 7. MAIN INPUT (FILE UPLOAD OR MANUAL TEXT) ---
 st.subheader("1. Input Document or Text")
 
-# File Uploader
 uploaded_file = st.file_uploader(
     "Upload a document (.pdf, .docx, .txt):",
     type=["pdf", "docx", "txt"]
@@ -128,7 +150,6 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f"Error reading file: {e}")
 
-# Text area pre-filled with uploaded file text or manual input
 input_text = st.text_area(
     "Or edit/paste your text below:",
     value=extracted_text,
@@ -149,7 +170,9 @@ if st.button("Generate Real-Time Summary", type="primary"):
                     text=input_text,
                     model=selected_model,
                     temp=temperature,
-                    tokens=max_tokens
+                    tokens=max_tokens,
+                    style=summary_style,
+                    language=target_language
                 )
             )
         except Exception as e:
