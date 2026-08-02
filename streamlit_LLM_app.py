@@ -21,7 +21,7 @@ st.set_page_config(
 st.title("⚡ AI Paragraph Summarizer")
 st.caption("Powered by NVIDIA NIM API & Llama Models")
 
-# --- 3. HELPER FUNCTIONS FOR FILE PARSING ---
+# --- 3. HELPER FUNCTIONS FOR FILE PARSING & METRICS ---
 def extract_text_from_pdf(file) -> str:
     """Extracts text from an uploaded PDF file using pypdf."""
     reader = PdfReader(file)
@@ -41,6 +41,29 @@ def extract_text_from_docx(file) -> str:
 def extract_text_from_txt(file) -> str:
     """Extracts text from an uploaded plain text (.txt) file."""
     return file.read().decode("utf-8")
+
+def display_analytics(original_text: str, summary_text: str):
+    """Calculates and displays summary metrics in columns."""
+    orig_words = len(original_text.split())
+    sum_words = len(summary_text.split())
+    
+    if orig_words > 0:
+        reduction = round(((orig_words - sum_words) / orig_words) * 100, 1)
+        reduction = max(0.0, reduction) # Ensure non-negative
+        time_saved_min = round((orig_words - sum_words) / 200, 1) # Avg reading speed: 200 wpm
+        time_saved_min = max(0.0, time_saved_min)
+    else:
+        reduction = 0.0
+        time_saved_min = 0.0
+
+    st.markdown("---")
+    st.subheader("📊 Summary Analytics")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    col1.metric("Original Words", f"{orig_words}")
+    col2.metric("Summary Words", f"{sum_words}")
+    col3.metric("Reduction", f"{reduction}%")
+    col4.metric("Time Saved", f"~{time_saved_min} min")
 
 
 # --- 4. SIDEBAR CONTROLS ---
@@ -157,7 +180,7 @@ input_text = st.text_area(
     placeholder="Enter long text or upload a file above..."
 )
 
-# --- 8. GENERATION LOGIC ---
+# --- 8. GENERATION LOGIC & ANALYTICS ---
 st.subheader("2. Summary Output")
 
 if st.button("Generate Real-Time Summary", type="primary"):
@@ -165,7 +188,8 @@ if st.button("Generate Real-Time Summary", type="primary"):
         st.warning("Please upload a valid file or enter text before generating a summary.")
     else:
         try:
-            st.write_stream(
+            # st.write_stream streams tokens and returns the concatenated full string when done
+            full_summary = st.write_stream(
                 generate_summary_stream(
                     text=input_text,
                     model=selected_model,
@@ -175,5 +199,28 @@ if st.button("Generate Real-Time Summary", type="primary"):
                     language=target_language
                 )
             )
+            
+            # Save to session_state so it persists across button re-renders
+            st.session_state["current_summary"] = full_summary
+            st.session_state["current_input"] = input_text
+
         except Exception as e:
             st.error(f"An error occurred while calling NVIDIA NIM API: {e}")
+
+# Display Analytics and Download Button if a summary exists in session_state
+if "current_summary" in st.session_state and st.session_state["current_summary"]:
+    full_summary = st.session_state["current_summary"]
+    current_input = st.session_state["current_input"]
+    
+    # Display Analytics Dashboard
+    display_analytics(original_text=current_input, summary_text=full_summary)
+    
+    # One-Click Download Button
+    st.markdown("### 📥 Export Summary")
+    st.download_button(
+        label="Download Summary (.txt)",
+        data=full_summary,
+        file_name="summary_output.txt",
+        mime="text/plain",
+        type="secondary"
+    )
