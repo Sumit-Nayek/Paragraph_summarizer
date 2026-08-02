@@ -389,7 +389,7 @@ with tab_ai_detect:
         else:
             with st.spinner("Scanning for AI patterns..."):
                 # Define Hugging Face Inference API details
-                API_URL = "https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector"
+                API_URL = "https://router.huggingface.co/hf-inference/models/openai-community/roberta-base-openai-detector"
                 headers = {"Authorization": f"Bearer {hf_token}"}
                 payload = {"inputs": detect_input}
                 
