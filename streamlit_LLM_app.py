@@ -387,11 +387,18 @@ with tab_ai_detect:
         elif not detect_input.strip():
             st.warning("Please enter some text to scan.")
         else:
+            # --- AFTER (Safely truncates long text to fit the 512 token limit) ---
             with st.spinner("Scanning for AI patterns..."):
-                # Define Hugging Face Inference API details
                 API_URL = "https://router.huggingface.co/hf-inference/models/openai-community/roberta-base-openai-detector"
                 headers = {"Authorization": f"Bearer {hf_token}"}
-                payload = {"inputs": detect_input}
+                
+                # RoBERTa models max out at ~512 tokens (~1500 characters).
+                # We safely slice the first 1500 characters to prevent 400 Tensor Errors.
+                safe_input = detect_input[:1500]
+                payload = {"inputs": safe_input}
+                
+                if len(detect_input) > 1500:
+                    st.info("ℹ️ Note: Text was long, so the detector analyzed the first ~350-400 words to fit the model's sequence limit.")
                 
                 try:
                     # Make the HTTP POST request
