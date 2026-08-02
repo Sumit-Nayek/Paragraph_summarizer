@@ -224,11 +224,14 @@
 #         mime="text/plain",
 #         type="secondary"
 #     )
-import streamlit as st
+import io
+import os
 import requests
+import streamlit as st
+from docx import Document
+from gtts import gTTS
 from openai import OpenAI
 from pypdf import PdfReader
-from docx import Document
 
 # --- 1. STREAMLIT UI CONFIGURATION ---
 st.set_page_config(
@@ -250,7 +253,7 @@ hf_token = st.sidebar.text_input("Hugging Face Token (for AI Detector)", type="p
 st.sidebar.markdown("---")
 
 
-# --- 3. HELPER FUNCTIONS FOR FILE PARSING & METRICS ---
+# --- 3. HELPER FUNCTIONS FOR FILE PARSING, METRICS & TTS ---
 def extract_text_from_pdf(file) -> str:
     reader = PdfReader(file)
     return "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
@@ -276,6 +279,25 @@ def display_analytics(original_text: str, summary_text: str):
     col2.metric("Summary Words", f"{sum_words}")
     col3.metric("Reduction", f"{reduction}%")
     col4.metric("Time Saved", f"~{time_saved_min} min")
+
+def generate_audio(text: str, language: str):
+    """Converts summary text into speech matching the target language accent."""
+    lang_codes = {
+        "English": "en",
+        "Spanish": "es",
+        "French": "fr",
+        "German": "de",
+        "Hindi": "hi",
+        "Mandarin Chinese": "zh-CN"
+    }
+    lang_code = lang_codes.get(language, "en")
+    
+    # Generate MP3 in memory
+    fp = io.BytesIO()
+    tts = gTTS(text=text, lang=lang_code)
+    tts.write_to_fp(fp)
+    fp.seek(0)
+    return fp
 
 
 # --- 4. STREAMING GENERATOR FOR NVIDIA NIM ---
@@ -323,7 +345,7 @@ tab_summary, tab_ai_detect = st.tabs(["📝 Summarizer", "🤖 AI Content Detect
 with tab_summary:
     st.header("Paragraph Summarizer")
     
-    # Settings exclusively for the summarizer
+    # Settings
     with st.expander("⚙️ Summarizer Settings"):
         model_mode = st.radio("Inference Mode:", ["⚡ Fast Mode (Llama 3.1 8B)", "🧠 Deep Mode (Llama 3.3 70B)"])
         selected_model = "meta/llama-3.1-8b-instruct" if "Fast Mode" in model_mode else "meta/llama-3.3-70b-instruct"
@@ -363,13 +385,32 @@ with tab_summary:
                 )
                 st.session_state["current_summary"] = full_summary
                 st.session_state["current_input"] = input_text
+                st.session_state["target_language"] = target_language
             except Exception as e:
                 st.error(f"API Error: {e}")
 
-    # Analytics & Download
+    # Analytics, Audio Player & Download
     if st.session_state.get("current_summary"):
-        display_analytics(st.session_state["current_input"], st.session_state["current_summary"])
-        st.download_button("📥 Download Summary (.txt)", data=st.session_state["current_summary"], file_name="summary.txt", mime="text/plain")
+        full_sum = st.session_state["current_summary"]
+        curr_inp = st.session_state["current_input"]
+        curr_lang = st.session_state.get("target_language", "English")
+        
+        display_analytics(curr_inp, full_sum)
+        
+        st.markdown("### 🔊 Listen & Export Summary")
+        col_listen, col_dl = st.columns(2)
+        
+        with col_listen:
+            if st.button("🔊 Read Aloud"):
+                with st.spinner("Converting text to speech..."):
+                    try:
+                        audio_data = generate_audio(full_sum, curr_lang)
+                        st.audio(audio_data, format="audio/mp3", autoplay=True)
+                    except Exception as e:
+                        st.error(f"Failed to generate audio: {e}")
+                        
+        with col_dl:
+            st.download_button("📥 Download Summary (.txt)", data=full_sum, file_name="summary.txt", mime="text/plain")
 
 
 # ==========================================
@@ -387,13 +428,10 @@ with tab_ai_detect:
         elif not detect_input.strip():
             st.warning("Please enter some text to scan.")
         else:
-            # --- AFTER (Safely truncates long text to fit the 512 token limit) ---
             with st.spinner("Scanning for AI patterns..."):
                 API_URL = "https://router.huggingface.co/hf-inference/models/openai-community/roberta-base-openai-detector"
                 headers = {"Authorization": f"Bearer {hf_token}"}
                 
-                # RoBERTa models max out at ~512 tokens (~1500 characters).
-                # We safely slice the first 1500 characters to prevent 400 Tensor Errors.
                 safe_input = detect_input[:1500]
                 payload = {"inputs": safe_input}
                 
@@ -401,13 +439,11 @@ with tab_ai_detect:
                     st.info("ℹ️ Note: Text was long, so the detector analyzed the first ~350-400 words to fit the model's sequence limit.")
                 
                 try:
-                    # Make the HTTP POST request
                     response = requests.post(API_URL, headers=headers, json=payload)
                     
                     if response.status_code == 200:
                         results = response.json()
                         
-                        # Hugging Face returns a list of lists. Example: [[{'label': 'Fake', 'score': 0.99}, ...]]
                         if isinstance(results, list) and len(results) > 0:
                             st.subheader("Detection Results:")
                             col1, col2 = st.columns(2)
@@ -416,7 +452,7 @@ with tab_ai_detect:
                                 label = classification.get("label")
                                 score = classification.get("score", 0) * 100
                                 
-                                if label == "Fake" or label == "AI":
+                                if label in ["Fake", "AI"]:
                                     col1.metric("🤖 Probability it is AI", f"{score:.2f}%")
                                 else:
                                     col2.metric("🧑‍💻 Probability it is Human", f"{score:.2f}%")
