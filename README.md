@@ -1,6 +1,7 @@
 # 📄 Paragraph Summarizer
 
 This is a simple AI-powered tool for summarizing paragraphs or longer texts into concise, coherent summaries. The app uses natural language processing (NLP) and transformer models to identify salient points and generate readable summaries.
+
 ![alt text](image.png)
 ---
 
